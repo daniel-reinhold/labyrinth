@@ -1,0 +1,21 @@
+:root {
+    --tile-width: 30px;
+    --tile-height: 30px;
+}
+
+table {
+    border-collapse: collapse
+}
+
+.tile {
+    width: var(--tile-width);
+    height: var(--tile-height);
+}
+
+.wall {
+    background: black;
+}
+
+.space {
+    background: white;
+}
