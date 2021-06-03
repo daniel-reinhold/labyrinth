@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Festlegen des eigentlichen Labyrinths
-    let labyrinth = solvableLabyrinth;
+    let labyrinth = solvableLabyrinth3;
 
     /*
     * Dieses Array repräsentiert eine Art "Karte", mit der gezeigt werden soll,
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
       col: 0
     };
 
-    let history = labyrinth;
+    let history = JSON.parse(JSON.stringify(labyrinth));
 
     function subSolve(row, col) {
         let upperCell               = null;
@@ -54,9 +54,10 @@ document.addEventListener("DOMContentLoaded", () => {
         let possibleDirectionsCount = 0;
         let possibleDirections      = [];
 
-        if (history[row][col] > 0) {
+        if (history[row][col] > 0)
             history[row][col]++;
-        }
+
+        console.log(`R: ${row} C: ${col}`);
 
         /*
         * Nur wenn row nicht der row des Startpunktes, und col nicht der col der Startpunktes entspricht
@@ -67,13 +68,10 @@ document.addEventListener("DOMContentLoaded", () => {
         * ist ein Ausgang gefunden worden
         * */
 
-        console.log(row !== startPoint.row &&
-            col !== startPoint.col)
-
-        if ((
-                row !== startPoint.row &&
-                col !== startPoint.col
-            ) && (
+        if (JSON.stringify({
+            row: row,
+            col: col
+        }) !== JSON.stringify(startPoint) && (
                 row === labyrinth.length - 1 ||
                 col === labyrinth[0].length - 1 ||
                 row === 0 ||
@@ -141,6 +139,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        console.log(possibleDirections);
+
         switch (possibleDirections[getRandom(possibleDirectionsCount)]) {
             case directions.upper:
                 return subSolve(row - 1, col);
@@ -191,10 +191,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     solve(labyrinth);
 
-    history.forEach(el => {
-      let s = "";
-      el.forEach(cl => s+= ` ${cl}`);
-      console.log(s);
+    history.forEach(row => {
+        let s = "";
+        row.forEach(col => s += ` ${col}`)
+        console.log(s);
     })
 
 });
