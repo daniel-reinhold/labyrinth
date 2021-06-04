@@ -3,8 +3,8 @@ let labyrinth = solvableLabyrinth;
 
 // Festlegen des Startpunktes
 let startPoint = {
-    row: 1,
-    col: 0
+    row: null,
+    col: null
 };
 
 /**
@@ -33,8 +33,19 @@ document.addEventListener("DOMContentLoaded", () => {
        document.querySelector('#settings').scrollIntoView({ block: 'end',  behavior: 'smooth' })
     });
 
+    document.querySelector('#btn-open-app').addEventListener('click', e =>  {
+        document.querySelector('#wrapper').scrollIntoView({ block: 'end',  behavior: 'smooth' })
+    });
+
     const TIMEOUT = 1;
     let steps = 0;
+    let mostEfficientWay = null;
+
+    document.querySelector('#btn-save').addEventListener('click', e => {
+        mostEfficientWay = parseInt(document.querySelector('#most-efficient-way').value);
+        startPoint.row = parseInt(document.querySelector('#start-point-row').value);
+        startPoint.col = parseInt(document.querySelector('#start-point-col').value);
+    })
 
     // Dieses Objekt repräsentiert jede Richtung, in die thoretisch gegangen werden könnte
     const directions = {
@@ -44,8 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
       left: 3
     }
 
-    function showErrorMessage() {
-        alert('Dieses Labyrinth ist nicht lösbar');
+    function showErrorMessage(message) {
+        alert(message);
     }
 
     // Funktion, die prüft ob ein Labyrinth lösbar ist?
@@ -106,9 +117,8 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
             // Ausgang gefunden
             document.querySelector(`#labyrinth > div:nth-of-type(${row + 1}) > div:nth-of-type(${col + 1})`).classList.add('cell-finished');
-            alert(`Das Labyrinth wurde gelöst. Endpunkt: [Reihe: ${row} | Spalte :${col}]. Benötigte Schritte: ${steps}`);
-            let best = findWay([startPoint.col, startPoint.row], [col, row]);
-            console.log(best);
+            alert(`Das Labyrinth wurde gelöst. Endpunkt: [Reihe: ${row} | Spalte :${col}]. Benötigte Schritte: ${steps}. Verhältnis zum effizientesten Weg: ${(steps / mostEfficientWay) * 100 }%`);
+
             return;
         }
 
@@ -184,7 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }, TIMEOUT);
         } catch (e) {
-            showErrorMessage();
+            showErrorMessage('Dieses Labyrinth ist nicht lösbar');
         }
     }
 
@@ -220,13 +230,27 @@ document.addEventListener("DOMContentLoaded", () => {
             table.appendChild(tableRow);
         }
 
-        // Die Funktion "subsolve" wird mit den Koordinaten des Startpunktes aufgerufen
-        if (solvable())
-            subSolve(startPoint.row, startPoint.col);
-        else
-            showErrorMessage();
+        document.querySelector('#btn-start').addEventListener('click', e => {
+            if ((startPoint.row instanceof Number || typeof startPoint.row === 'number') && (startPoint.col instanceof Number || typeof startPoint.col === 'number')) {
+                if (labyrinth[startPoint.row][startPoint.col] === 1) {
+                    if (mostEfficientWay instanceof Number || typeof mostEfficientWay === 'number') {
+                        if (solvable()) {
+                            // Die Funktion "subsolve" wird mit den Koordinaten des Startpunktes aufgerufen
+                            subSolve(startPoint.row, startPoint.col)
+                        } else {
+                            showErrorMessage('Dieses Labyrinth ist nicht lösbar.');
+                        }
+                    } else {
+                        showErrorMessage('Die effizienteste Strecke wurde nicht angegeben.');
+                    }
+                } else {
+                    showErrorMessage('Bei dem angegebenen Startpunkt handelt es sich um eine Wand.')
+                }
+            } else {
+                showErrorMessage('Der Startpunkt wurde fehlerhaft angegeben.');
+            }
+        });
     }
 
-    solve(labyrinth);
-
+    solve(labyrinth)
 });
