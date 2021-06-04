@@ -1,3 +1,12 @@
+// Festlegen des eigentlichen Labyrinths
+let labyrinth = solvableLabyrinth;
+
+// Festlegen des Startpunktes
+let startPoint = {
+    row: 1,
+    col: 0
+};
+
 /**
  * @description Diese Funktion generiert eine Zufallszahl zwischen 0 und maxDirections (exklusiv)
  * @param {number} maxDirections
@@ -20,7 +29,14 @@ function getRandom(maxDirections) {
 * */
 document.addEventListener("DOMContentLoaded", () => {
 
-    // Dieses Objekt representiert jede Richtung, in die thoretisch gegangen werden könnte
+    document.querySelector('#btn-open-settings').addEventListener('click', e =>  {
+       document.querySelector('#settings').scrollIntoView({ block: 'end',  behavior: 'smooth' })
+    });
+
+    const TIMEOUT = 1;
+    let steps = 0;
+
+    // Dieses Objekt repräsentiert jede Richtung, in die thoretisch gegangen werden könnte
     const directions = {
       upper: 0,
       right: 1,
@@ -28,23 +44,33 @@ document.addEventListener("DOMContentLoaded", () => {
       left: 3
     }
 
-    // Festlegen des eigentlichen Labyrinths
-    let labyrinth = solvableLabyrinth3;
+    function showErrorMessage() {
+        alert('Dieses Labyrinth ist nicht lösbar');
+    }
 
-    /*
-    * Dieses Array repräsentiert eine Art "Karte", mit der gezeigt werden soll,
-    * welche Zellen wie oft beschritten wurden
-    * */
-    let heatmap = new Array(labyrinth.length).fill(0).map(() => new Array(labyrinth[0].length).fill(0));
+    // Funktion, die prüft ob ein Labyrinth lösbar ist?
+    function solvable() {
+        let exits = [];
 
-    // Festlegen des Startpunktes
-    // TODO: Anja: In der Dokumentation muss auf jeden Fall erwähnt werden, dass ein Startpunkt gesetzt werden muss
-    let startPoint = {
-      row: 1,
-      col: 0
-    };
+        for (let row = 0; row < labyrinth.length; row++) {
+            for (let col = 0; col < labyrinth[row].length; col++) {
+                if (row === 0 || col === labyrinth[0].length - 1 || row === labyrinth.length - 1 || col === 0) {
+                    let currentLocation = {
+                        row: row,
+                        col: col
+                    };
 
-    let history = JSON.parse(JSON.stringify(labyrinth));
+                    if (labyrinth[row][col] === 1 && JSON.stringify(startPoint) !== JSON.stringify(currentLocation))
+                        exits.push(currentLocation);
+                }
+            }
+        }
+
+        if (exits.length === 0)
+            return false;
+
+        return true;
+    }
 
     function subSolve(row, col) {
         let upperCell               = null;
@@ -54,10 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
         let possibleDirectionsCount = 0;
         let possibleDirections      = [];
 
-        if (history[row][col] > 0)
-            history[row][col]++;
+        steps++;
 
-        console.log(`R: ${row} C: ${col}`);
+        document.querySelectorAll('#labyrinth > div > div').forEach(elem => elem.classList.remove('cell-current'));
+        document.querySelector(`#labyrinth > div:nth-of-type(${row + 1}) > div:nth-of-type(${col + 1})`).classList.add('cell-current');
 
         /*
         * Nur wenn row nicht der row des Startpunktes, und col nicht der col der Startpunktes entspricht
@@ -79,7 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
             )
         ) {
             // Ausgang gefunden
-            console.log(`Gelöst. Endpunkt: [R:${row}|C:${col}]`);
+            document.querySelector(`#labyrinth > div:nth-of-type(${row + 1}) > div:nth-of-type(${col + 1})`).classList.add('cell-finished');
+            alert(`Das Labyrinth wurde gelöst. Endpunkt: [Reihe: ${row} | Spalte :${col}]. Benötigte Schritte: ${steps}`);
+            let best = findWay([startPoint.col, startPoint.row], [col, row]);
+            console.log(best);
             return;
         }
 
@@ -139,17 +168,23 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        console.log(possibleDirections);
-
-        switch (possibleDirections[getRandom(possibleDirectionsCount)]) {
-            case directions.upper:
-                return subSolve(row - 1, col);
-            case directions.right:
-                return subSolve(row, col + 1);
-            case directions.lower:
-                return subSolve(row + 1, col);
-            case directions.left:
-                return subSolve(row, col - 1);
+        try {
+            setTimeout(() => {
+                switch (possibleDirections[getRandom(possibleDirectionsCount)]) {
+                    case directions.upper:
+                        return subSolve(row - 1, col);
+                    case directions.right:
+                        return subSolve(row, col + 1);
+                    case directions.lower:
+                        return subSolve(row + 1, col);
+                    case directions.left:
+                        return subSolve(row, col - 1);
+                    default:
+                        console.error('RECURSION ERROR!');
+                }
+            }, TIMEOUT);
+        } catch (e) {
+            showErrorMessage();
         }
     }
 
@@ -160,12 +195,12 @@ document.addEventListener("DOMContentLoaded", () => {
         for (let row = 0; row < labyrinth.length; row++) {
 
             // Für jede Zeile wird eine TableRow (<tr>) erstellt
-            let tableRow = document.createElement('tr');
+            let tableRow = document.createElement('div');
 
             for (let col = 0; col < labyrinth[row].length; col++) {
 
                 // Für jede Spalte innerhalb einer Zeile wird eine TableCell (<td>) erstellt
-                let tableCell = document.createElement('td');
+                let tableCell = document.createElement('div');
 
                 // Jede Zelle bekommt die Klasse "tile"
                 tableCell.classList.add('tile');
@@ -186,15 +221,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Die Funktion "subsolve" wird mit den Koordinaten des Startpunktes aufgerufen
-        subSolve(startPoint.row, startPoint.col);
+        if (solvable())
+            subSolve(startPoint.row, startPoint.col);
+        else
+            showErrorMessage();
     }
 
     solve(labyrinth);
-
-    history.forEach(row => {
-        let s = "";
-        row.forEach(col => s += ` ${col}`)
-        console.log(s);
-    })
 
 });
